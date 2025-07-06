@@ -9,6 +9,12 @@ exports.generate = async (req, res) => {
   }
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  // Disable buffering proxies and ensure chunks are sent as soon as possible
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  if (typeof res.flushHeaders === 'function') {
+    res.flushHeaders();
+  }
 
   try {
     for await (const chunk of llmService.stream(prompt, options)) {
