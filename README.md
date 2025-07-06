@@ -49,7 +49,17 @@ Select the provider using the `LLM_PROVIDER` environment variable (defaults to
   ```
 
 The response streams the generated text chunks as plain text. Clients should
-consume the body incrementally until the connection closes.
+consume the body incrementally until the connection closes. The server uses
+HTTP chunked encoding so messages appear as the LLM produces them.
 
 The project uses [Express](https://expressjs.com/) and [Nodemon](https://www.npmjs.com/package/nodemon)
 for development.
+
+## Frontend
+
+A simple React interface is served from the `public/` directory. When the server is running, browse to `http://localhost:3000/` to interact with the chatbot. The page displays two panes:
+
+- **Work area** – left side placeholder for future bot actions.
+- **Chat pane** – right side interface to send prompts and view streaming responses from `/llm`.
+
+The frontend uses React from CDN and requires no build step.
