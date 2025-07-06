@@ -32,5 +32,24 @@ recommended tools as part of a tool execution chain.
 - `src/controllers/` – controller logic (request handlers)
 - `src/services/` – business logic (future LLM and tool integration)
 
+## LLM Integration
+
+The service communicates with large language models via pluggable providers.
+Select the provider using the `LLM_PROVIDER` environment variable (defaults to
+`openai`). For OpenAI you must also provide `OPENAI_API_KEY`.
+
+### LLM Endpoint
+
+- `POST /llm` – send a prompt and receive the generated response.
+  ```json
+  {
+    "prompt": "Hello",
+    "options": { "model": "gpt-3.5-turbo" }
+  }
+  ```
+
+The response streams the generated text chunks as plain text. Clients should
+consume the body incrementally until the connection closes.
+
 The project uses [Express](https://expressjs.com/) and [Nodemon](https://www.npmjs.com/package/nodemon)
 for development.
