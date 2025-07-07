@@ -27,7 +27,10 @@
         const messagesEndRef = React.useRef(null);
 
         React.useEffect(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+
         }, [messages]);
 
         async function handleSend(e) {
