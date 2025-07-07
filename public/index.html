@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>agentRunner Chatbot</title>
+    <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; }
+      #container { display: flex; height: 100vh; }
+      #workPane { flex: 1; border-right: 1px solid #ccc; padding: 1rem; overflow-y: auto; }
+      #chatPane { width: 400px; display: flex; flex-direction: column; }
+      #messages { flex: 1; padding: 1rem; overflow-y: auto; }
+      #inputForm { display: flex; border-top: 1px solid #ccc; }
+      #inputForm input { flex: 1; padding: 0.5rem; border: none; }
+      #inputForm button { padding: 0.5rem 1rem; }
+      .message { margin-bottom: 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+      function Chat() {
+        const [messages, setMessages] = React.useState([]);
+        const [input, setInput] = React.useState('');
+        const messagesEndRef = React.useRef(null);
+
+        React.useEffect(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, [messages]);
+
+        async function handleSend(e) {
+          e.preventDefault();
+          const userText = input.trim();
+          if (!userText) return;
+          setMessages(msgs => [...msgs, { from: 'user', text: userText }]);
+          setInput('');
+          const res = await fetch('/llm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: userText }),
+          });
+          if (!res.ok) {
+            const errorText = await res.text();
+            setMessages(msgs => [...msgs, { from: 'error', text: errorText }]);
+            return;
+          }
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let botMsg = '';
+          setMessages(msgs => [...msgs, { from: 'bot', text: '' }]);
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            botMsg += decoder.decode(value, { stream: true });
+            setMessages(msgs => {
+              const updated = [...msgs];
+              updated[updated.length - 1] = { from: 'bot', text: botMsg };
+              return updated;
+            });
+          }
+        }
+
+        return (
+          <div id="chatPane">
+            <div id="messages">
+              {messages.map((m, idx) => (
+                <div key={idx} className="message">
+                  <strong>{m.from}: </strong>
+                  <span>{m.text}</span>
+                </div>
+              ))}
+              <div ref={messagesEndRef}></div>
+            </div>
+            <form id="inputForm" onSubmit={handleSend}>
+              <input value={input} onChange={e => setInput(e.target.value)} placeholder="Type a message..." />
+              <button type="submit">Send</button>
+            </form>
+          </div>
+        );
+      }
+
+      function App() {
+        return (
+          <div id="container">
+            <div id="workPane">Work area (coming soon)</div>
+            <Chat />
+          </div>
+        );
+      }
+
+      ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+  </body>
+</html>
